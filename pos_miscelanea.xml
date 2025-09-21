@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE pos_miscelanea SYSTEM "pos_miscelanea.dtd">
+<pos_miscelanea>
+    
+    <inventario>
+        <producto id="prod_001">
+            <nombre>Coca-Cola 600ml</nombre>
+            <codigo_barras>7501055312345</codigo_barras>
+            <precio_compra>12.00</precio_compra>
+            <precio_venta>18.00</precio_venta>
+            <stock>150</stock>
+            <unidad>pieza</unidad>
+            <proveedor_ref>Coca-Cola FEMSA</proveedor_ref>
+            <fecha_alta>2025-09-16</fecha_alta>
+        </producto>
+        <producto id="prod_002">
+            <nombre>Gansito Marinela</nombre>
+            <codigo_barras>7501000101010</codigo_barras>
+            <precio_compra>10.00</precio_compra>
+            <precio_venta>15.00</precio_venta>
+            <stock>200</stock>
+            <unidad>pieza</unidad>
+            <proveedor_ref>Bimbo</proveedor_ref>
+            <fecha_alta>2025-09-16</fecha_alta>
+        </producto>
+    </inventario>
+    
+    <ventas>
+        <venta id="vent_001">
+            <fecha>2025-09-16</fecha>
+            <hora>10:30:00</hora>
+            <total>33.00</total>
+            <items>
+                <item producto_id="prod_001" cantidad="1"/>
+                <item producto_id="prod_002" cantidad="1"/>
+            </items>
+            <tipo_pago>Efectivo</tipo_pago>
+        </venta>
+    </ventas>
+    
+    <clientes>
+        <cliente id="clt_001">
+            <nombre>Juan Pérez</nombre>
+            <telefono>5512345678</telefono>
+            <cuenta_credito>
+                <deuda>55.00</deuda>
+                <historial_pagos>
+                    <pago fecha="2025-09-10" monto="20.00"/>
+                </historial_pagos>
+            </cuenta_credito>
+        </cliente>
+    </clientes>
+    
+    <proveedores>
+        <proveedor id="prov_001">
+            <nombre>Coca-Cola FEMSA</nombre>
+            <contacto>5598765432</contacto>
+        </proveedor>
+    </proveedores>
+    
+    <usuarios>
+        <usuario id="usr_001">
+            <nombre_usuario>admin</nombre_usuario>
+            <contrasena>admin123</contrasena>
+            <rol>administrador</rol>
+        </usuario>
+    </usuarios>
+    
+</pos_miscelanea>

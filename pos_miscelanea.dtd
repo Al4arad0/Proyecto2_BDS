@@ -1,0 +1,48 @@
+<!ELEMENT pos_miscelanea (inventario, ventas, clientes, proveedores, usuarios)>
+
+<!ELEMENT inventario (producto+)>
+<!ELEMENT producto (nombre, codigo_barras, precio_compra, precio_venta, stock, unidad, proveedor_ref, fecha_alta)>
+<!ATTLIST producto id ID #REQUIRED>
+<!ELEMENT nombre (#PCDATA)>
+<!ELEMENT codigo_barras (#PCDATA)>
+<!ELEMENT precio_compra (#PCDATA)>
+<!ELEMENT precio_venta (#PCDATA)>
+<!ELEMENT stock (#PCDATA)>
+<!ELEMENT unidad (#PCDATA)>
+<!ELEMENT proveedor_ref (#PCDATA)>
+<!ELEMENT fecha_alta (#PCDATA)>
+
+<!ELEMENT ventas (venta*)>
+<!ELEMENT venta (fecha, hora, total, items, tipo_pago)>
+<!ATTLIST venta id ID #REQUIRED>
+<!ELEMENT fecha (#PCDATA)>
+<!ELEMENT hora (#PCDATA)>
+<!ELEMENT total (#PCDATA)>
+<!ELEMENT items (item+)>
+<!ELEMENT item EMPTY>
+<!ATTLIST item producto_id IDREF #REQUIRED>
+<!ATTLIST item cantidad CDATA #REQUIRED>
+<!ELEMENT tipo_pago (#PCDATA)>
+
+<!ELEMENT clientes (cliente*)>
+<!ELEMENT cliente (nombre, telefono, cuenta_credito?)>
+<!ATTLIST cliente id ID #REQUIRED>
+<!ELEMENT telefono (#PCDATA)>
+<!ELEMENT cuenta_credito (deuda, historial_pagos?)>
+<!ELEMENT deuda (#PCDATA)>
+<!ELEMENT historial_pagos (pago*)>
+<!ELEMENT pago EMPTY>
+<!ATTLIST pago fecha CDATA #REQUIRED>
+<!ATTLIST pago monto CDATA #REQUIRED>
+
+<!ELEMENT proveedores (proveedor*)>
+<!ELEMENT proveedor (nombre, contacto)>
+<!ATTLIST proveedor id ID #REQUIRED>
+<!ELEMENT contacto (#PCDATA)>
+
+<!ELEMENT usuarios (usuario*)>
+<!ELEMENT usuario (nombre_usuario, contrasena, rol)>
+<!ATTLIST usuario id ID #REQUIRED>
+<!ELEMENT nombre_usuario (#PCDATA)>
+<!ELEMENT contrasena (#PCDATA)>
+<!ELEMENT rol (#PCDATA)>
