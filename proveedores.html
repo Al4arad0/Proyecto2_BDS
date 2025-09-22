@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Clientes - POS Miscelánea Mary</title>
+    <title>Proveedores - POS Miscelánea Mary</title>
     <link rel="stylesheet" href="styles.css">
+    <!-- CORRECCIÓN: Carga el script correcto para proveedores -->
+    <script src="proveedores.js" defer></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -13,11 +15,10 @@
         <div class="logo">POS MISCELÁNEA MARY</div>
         <nav>
             <ul>
-                <li><a href="index.html"><span class="material-icons">home</span> Inicio </a></li>
-                <li><a href="ventas.html" ><span class="material-icons">sell</span> Ventas</a></li>
+                <li><a href="/"><span class="material-icons">sell</span> Ventas</a></li>
                 <li><a href="inventario.html"><span class="material-icons">inventory_2</span> Inventario</a></li>
-                <li><a href="clientes.html" class="active"><span class="material-icons">groups</span> Clientes</a></li>
-                <li><a href="proveedores.html"><span class="material-icons">local_shipping</span> Proveedores</a></li>
+                <li><a href="clientes.html"><span class="material-icons">groups</span> Clientes</a></li>
+                <li><a href="proveedores.html" class="active"><span class="material-icons">local_shipping</span> Proveedores</a></li>
                 <li><a href="reportes.html"><span class="material-icons">bar_chart</span> Reportes</a></li>
                 <li><a href="configuracion.html"><span class="material-icons">settings</span> Configuración</a></li>
                 <li><a href="#"><span class="material-icons">logout</span> Cerrar Sesión</a></li>
@@ -27,42 +28,40 @@
 
     <div class="main-content">
         <header>
-            <h1>Gestión de Clientes</h1>
+            <h1>Gestión de Proveedores</h1>
             <div class="user-info">
                 <span>Usuario: Admin</span>
             </div>
         </header>
 
         <section class="clients-container">
-            <h2>Lista de Clientes</h2>
-            <table id="clientTable">
+            <h2>Lista de Proveedores</h2>
+            <!-- CORRECCIÓN: IDs específicos para proveedores -->
+            <table id="supplierTable">
                 <thead>
                     <tr>
                         <th>ID</th>
                         <th>Nombre</th>
-                        <th>Teléfono</th>
-                        <th>Deuda</th>
+                        <th>Contacto</th>
                         <th>Acciones</th>
                     </tr>
                 </thead>
-                <tbody id="clientList">
-                    <!-- Los clientes se cargarán aquí dinámicamente -->
+                <tbody id="supplierList">
+                    <!-- Los proveedores se cargarán aquí dinámicamente -->
                 </tbody>
             </table>
         </section>
 
         <section class="add-client-form">
-            <h2>Agregar Nuevo Cliente</h2>
-            <form id="newClientForm">
-                <input type="text" id="nombre" placeholder="Nombre completo" required>
-                <input type="tel" id="telefono" placeholder="Teléfono" required>
-                <input type="number" id="deuda" placeholder="Deuda inicial (opcional)" step="0.01">
-                <button type="submit" class="checkout-btn">Agregar Cliente</button>
+            <h2>Agregar Nuevo Proveedor</h2>
+            <!-- CORRECCIÓN: IDs y placeholders para proveedores -->
+            <form id="newSupplierForm">
+                <input type="text" id="nombre" placeholder="Nombre del proveedor" required>
+                <input type="tel" id="contacto" placeholder="Teléfono o email de contacto" required>
+                <button type="submit" class="checkout-btn">Agregar Proveedor</button>
             </form>
         </section>
     </div>
 
-    <script src="clientes.js" defer></script>
 </body>
 </html>
-

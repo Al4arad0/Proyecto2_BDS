@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuración - POS Miscelánea Mary</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">POS MISCELÁNEA MARY</div>
+        <nav>
+            <ul>
+                <li><a href="index.html" ><span class="material-icons">home</span> Inicio </a></li>
+                <li><a href="ventas.html" ><span class="material-icons">sell</span> Ventas</a></li>
+                <li><a href="inventario.html"><span class="material-icons">inventory_2</span> Inventario</a></li>
+                <li><a href="clientes.html"><span class="material-icons">groups</span> Clientes</a></li>
+                <li><a href="proveedores.html"><span class="material-icons">local_shipping</span> Proveedores</a></li>
+                <li><a href="reportes.html"><span class="material-icons">bar_chart</span> Reportes</a></li>
+                <li><a href="configuracion.html" class="active"><span class="material-icons">settings</span> Configuración</a></li>
+                <li><a href="#"><span class="material-icons">logout</span> Cerrar Sesión</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1>Configuración del Sistema</h1>
+            <div class="user-info">
+                <span>Usuario: Admin</span>
+            </div>
+        </header>
+
+        <section class="settings-container">
+            <h2>Datos del Negocio</h2>
+            <form id="businessDetailsForm">
+                <label for="storeName">Nombre de la Tienda:</label>
+                <input type="text" id="storeName" value="POS MISCELÁNEA MARY">
+                
+                <label for="storeAddress">Dirección:</label>
+                <input type="text" id="storeAddress" placeholder="Ej: Av. Principal 123, Colonia Centro">
+
+                <label for="ticketFooter">Mensaje en el Ticket:</label>
+                <textarea id="ticketFooter" rows="3">¡Gracias por su compra!</textarea>
+
+                <button type="submit" class="checkout-btn">Guardar Cambios</button>
+            </form>
+        </section>
+
+        <section class="settings-container">
+            <h2>Usuarios</h2>
+            <p>Aquí se podría administrar la lista de usuarios, cambiar contraseñas y asignar roles.</p>
+            <!-- Futura tabla de usuarios y formulario de gestión -->
+        </section>
+
+    </div>
+
+    <script src="configuracion.js" defer></script>
+</body>
+</html>
+

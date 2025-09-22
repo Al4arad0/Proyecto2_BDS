@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reportes - POS Miscelánea Mary</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo">POS MISCELÁNEA MARY</div>
+        <nav>
+            <ul>
+                <li><a href="index.html" ><span class="material-icons">home</span> Inicio </a></li>
+                <li><a href="ventas.html" ><span class="material-icons">sell</span> Ventas</a></li>
+                <li><a href="inventario.html"><span class="material-icons">inventory_2</span> Inventario</a></li>
+                <li><a href="clientes.html"><span class="material-icons">groups</span> Clientes</a></li>
+                <li><a href="proveedores.html"><span class="material-icons">local_shipping</span> Proveedores</a></li>
+                <li><a href="reportes.html" class="active"><span class="material-icons">bar_chart</span> Reportes</a></li>
+                <li><a href="configuracion.html"><span class="material-icons">settings</span> Configuración</a></li>
+                <li><a href="#"><span class="material-icons">logout</span> Cerrar Sesión</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <header>
+            <h1>Reportes de Ventas</h1>
+            <div class="user-info">
+                <span>Usuario: Admin</span>
+            </div>
+        </header>
+
+        <section class="reports-container">
+            <h2>Generar Reporte</h2>
+            <div class="report-options">
+                <label for="reportType">Tipo de Reporte:</label>
+                <select id="reportType">
+                    <option value="ventas-mensuales">Ventas Totales por Mes</option>
+                    <option value="productos-mas-vendidos">Productos Más Vendidos</option>
+                    <option value="ventas-por-dia">Ventas por Día</option>
+                </select>
+                <button id="generateReportBtn" class="checkout-btn">Generar</button>
+            </div>
+
+            <div class="report-display">
+                <h3>Resultados del Reporte</h3>
+                <div id="reportResults">
+                    <p>Selecciona un tipo de reporte y haz clic en "Generar" para ver los resultados.</p>
+                    <!-- Los resultados del reporte se cargarán aquí dinámicamente -->
+                </div>
+            </div>
+        </section>
+
+    </div>
+
+    <script src="reportes.js" defer></script>
+</body>
+</html>
+

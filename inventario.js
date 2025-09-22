@@ -6,39 +6,55 @@ document.addEventListener('DOMContentLoaded', () => {
     const fetchProducts = async () => {
         try {
             const response = await fetch('http://localhost:3000/api/productos');
+            
             if (!response.ok) {
-                throw new Error('No se pudo obtener la lista de productos.');
+                // Si el servidor responde con un error (ej. 500), lo muestra en la consola.
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'No se pudo obtener la lista de productos.');
             }
-            const data = await response.json();
             
-            // Limpia la tabla antes de insertar los nuevos datos
-            inventoryList.innerHTML = '';
+            // --- INICIO DE LA CORRECCIÓN ---
+            // 'data' ahora es un array simple de productos: [{id: "...", nombre: "..."}, ...]
+            const products = await response.json();
             
-            // Recorre los productos y los inserta en la tabla
-            data.elements[0].elements.forEach(producto => {
+            inventoryList.innerHTML = ''; // Limpia la tabla antes de insertar los nuevos datos
+            
+            if (products.length === 0) {
                 const row = document.createElement('tr');
-                const id = producto.attributes.id;
+                row.innerHTML = `<td colspan="5" style="text-align:center;">No hay productos en el inventario.</td>`;
+                inventoryList.appendChild(row);
+                return;
+            }
+
+            // Recorre el array de productos y crea una fila por cada uno.
+            products.forEach(product => {
+                const row = document.createElement('tr');
                 
+                // Accede a las propiedades directamente (ej. product.nombre)
                 row.innerHTML = `
-                    <td>${id}</td>
-                    <td>${producto.elements.find(el => el.name === 'nombre').elements[0].text}</td>
-                    <td>$${producto.elements.find(el => el.name === 'precio_venta').elements[0].text}</td>
-                    <td>${producto.elements.find(el => el.name === 'stock').elements[0].text}</td>
+                    <td>${product.id}</td>
+                    <td>${product.nombre}</td>
+                    <td>$${product.precio_venta.toFixed(2)}</td>
+                    <td>${product.stock}</td>
                     <td>
-                        <button class="edit-btn" data-id="${id}">Editar</button>
-                        <button class="delete-btn" data-id="${id}">Eliminar</button>
+                        <button class="edit-btn" data-id="${product.id}">Editar</button>
+                        <button class="delete-btn" data-id="${product.id}">Eliminar</button>
                     </td>
                 `;
                 inventoryList.appendChild(row);
             });
+            // --- FIN DE LA CORRECCIÓN ---
             
         } catch (error) {
-            console.error('Error:', error);
-            alert('Hubo un error al cargar el inventario.');
+            console.error('Error en fetchProducts:', error);
+            inventoryList.innerHTML = '';
+            const row = document.createElement('tr');
+            row.innerHTML = `<td colspan="5" style="text-align:center; color: red;">Error al cargar el inventario: ${error.message}</td>`;
+            inventoryList.appendChild(row);
         }
     };
 
-    // Función para manejar el envío del formulario
+    // Función para manejar el envío del formulario de nuevo producto
     const handleAddProduct = async (event) => {
         event.preventDefault();
 
@@ -55,9 +71,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
             const response = await fetch('http://localhost:3000/api/productos', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(newProduct)
             });
 
@@ -70,8 +84,8 @@ document.addEventListener('DOMContentLoaded', () => {
             fetchProducts(); // Vuelve a cargar la lista para mostrar el nuevo producto
             
         } catch (error) {
-            console.error('Error:', error);
-            alert('Hubo un error al agregar el producto.');
+            console.error('Error en handleAddProduct:', error);
+            alert(`Hubo un error al agregar el producto: ${error.message}`);
         }
     };
 
@@ -81,3 +95,4 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carga los productos al iniciar la página
     fetchProducts();
 });
+

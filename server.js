@@ -1,340 +1,413 @@
-
 const express = require('express');
 const axios = require('axios');
 const cors = require('cors');
 const convert = require('xml-js');
-const path = require('path'); // Importar el módulo path
+const path = require('path');
 
-// Crea una instancia de Express
 const app = express();
 const PORT = 3000;
 
-// Middleware
-
-app.use(express.json()); // Permite a Express leer JSON en el cuerpo de las peticiones
-app.use(cors()); // Habilita CORS para permitir peticiones desde tu front-end
-
-// Sirve los archivos estáticos desde la carpeta actual
-// Esto permitirá al navegador encontrar index.html, styles.css, etc.
-app.use(express.static(path.join(__dirname, '/')));
-
-// Sirve el archivo HTML principal para la ruta raíz
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
-});
-
-// Sirve el archivo HTML para la ruta de inventario
-app.get('/inventario.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'inventario.html'));
-});
-
-app.get('/clientes.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'clientes.html'));
-});
-
-app.get('/configuracion.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'configuracion.html'));
-});
-
-app.get('/reportes.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'reportes.html'));
-});
-
-// Configuración de la base de datos eXist-db
-const existDbUrl = 'http://localhost:8088/exist/rest/db';
+// --- CONFIGURACIÓN ---
+const existDbUrl = 'http://localhost:8088/exist/rest';
 const existDbUser = 'admin';
-const existDbPass = 'admin';
+const existDbPass = 'Alvaalex1003.@.'; // IMPORTANTE: Pon aquí tu contraseña correcta
+const dbPath = '/db/miscelanea/pos_miscelanea.xml';
 
-// Middleware de autenticación básica para eXist-db
 const existDbConfig = {
-    auth: {
-        username: existDbUser,
-        password: existDbPass
-    }
+    auth: { username: existDbUser, password: existDbPass }
 };
+const xmlOptions = { compact: false, spaces: 4 };
 
-// --- RUTAS DE LA APLICACIÓN ---
-// ## Manejo de Productos ##
+// --- MIDDLEWARE ---
+app.use(express.json());
+app.use(cors());
+app.use(express.static(__dirname));
 
-// Ruta para obtener todos los productos del inventario
+// --- RUTAS DE PÁGINAS HTML ---
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'index.html')));
+app.get('/inventario.html', (req, res) => res.sendFile(path.join(__dirname, 'inventario.html')));
+app.get('/clientes.html', (req, res) => res.sendFile(path.join(__dirname, 'clientes.html')));
+app.get('/proveedores.html', (req, res) => res.sendFile(path.join(__dirname, 'proveedores.html')));
+app.get('/reportes.html', (req, res) => res.sendFile(path.join(__dirname, 'reportes.html')));
+app.get('/configuracion.html', (req, res) => res.sendFile(path.join(__dirname, 'configuracion.html')));
+
+// --- FUNCIÓN AUXILIAR PARA NODOS ---
+const findNode = (elements, name) => elements.find(el => el.type === 'element' && el.name === name);
+
+// --- API PARA PRODUCTOS ---
 app.get('/api/productos', async (req, res) => {
     try {
-        // Consulta XQuery para seleccionar todos los productos del documento XML
-        const xquery = `
-            xquery version "3.1";
-            let $doc := doc("pos_miscelanea.xml")/pos_miscelanea
-            return $doc/inventario/producto
-        `;
+        const response = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(response.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        const inventarioNode = findNode(posNode.elements, 'inventario');
+        if (!inventarioNode || !inventarioNode.elements) return res.json([]);
 
-        // Realiza la petición a la API REST de eXist-db
-        const response = await axios.post(
-            `${existDbUrl}/consulta`,
-            xquery,
-            existDbConfig
-        );
-        // Envía los datos de los productos como respuesta
-        res.status(200).json(response.data);
+        const cleanProducts = inventarioNode.elements
+            .filter(el => el.type === 'element' && el.name === 'producto')
+            .map(p => {
+                const productData = { id: p.attributes.id };
+                p.elements.forEach(field => {
+                    const value = field.elements ? field.elements[0].text : '';
+                    productData[field.name] = value;
+                });
+                productData.precio_venta = parseFloat(productData.precio_venta) || 0;
+                productData.precio_compra = parseFloat(productData.precio_compra) || 0;
+                productData.stock = parseInt(productData.stock, 10) || 0;
+                return productData;
+            });
+        res.json(cleanProducts);
     } catch (error) {
-        console.error('Error al obtener productos:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error("Error al obtener productos:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Ruta para actualizar un producto.
-app.put('/api/productos/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const productoActualizado = req.body;
-        
-        const xquery = `
-            xquery version "3.1";
-            let $producto := doc("pos_miscelanea.xml")/pos_miscelanea/inventario/producto[@id="${id}"]
-            return (
-                update replace $producto/nombre with <nombre>${productoActualizado.nombre}</nombre>,
-                update replace $producto/codigo_barras with <codigo_barras>${productoActualizado.codigo_barras}</codigo_barras>,
-                update replace $producto/precio_compra with <precio_compra>${productoActualizado.precio_compra}</precio_compra>,
-                update replace $producto/precio_venta with <precio_venta>${productoActualizado.precio_venta}</precio_venta>,
-                update replace $producto/stock with <stock>${productoActualizado.stock}</stock>,
-                update replace $producto/unidad with <unidad>${productoActualizado.unidad}</unidad>,
-                update replace $producto/proveedor_ref with <proveedor_ref>${productoActualizado.proveedor_ref}</proveedor_ref>
-            )
-        `;
-
-        await axios.post(`${existDbUrl}/consulta`, xquery, existDbConfig);
-        res.status(200).json({ mensaje: 'Producto actualizado exitosamente' });
-    } catch (error) {
-        console.error('Error al actualizar producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// Ruta para agregar un nuevo producto
 app.post('/api/productos', async (req, res) => {
     try {
-        const nuevoProducto = req.body;
-        const nuevoId = `prod_${Math.floor(Math.random() * 10000)}`; // Genera un ID simple
+        const nuevoProductoData = req.body;
+        const getResponse = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(getResponse.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        const inventarioNode = findNode(posNode.elements, 'inventario');
 
-        // Transacción XQuery para insertar un nuevo producto
-        const xquery = `
-            xquery version "3.1";
-            update insert
-                <producto id="${nuevoId}">
-                    <nombre>${nuevoProducto.nombre}</nombre>
-                    <codigo_barras>${nuevoProducto.codigo_barras}</codigo_barras>
-                    <precio_compra>${nuevoProducto.precio_compra}</precio_compra>
-                    <precio_venta>${nuevoProducto.precio_venta}</precio_venta>
-                    <stock>${nuevoProducto.stock}</stock>
-                    <unidad>${nuevoProducto.unidad}</unidad>
-                    <proveedor>${nuevoProducto.proveedor}</proveedor>
-                    <fecha_alta>${new Date().toISOString().slice(0, 10)}</fecha_alta>
-                </producto>
-            into doc("pos_miscelanea.xml")/pos_miscelanea/inventario
-        `;
+        const nuevoProducto = {
+            type: 'element', name: 'producto', attributes: { id: `prod_${Date.now()}` },
+            elements: [
+                { type: 'element', name: 'nombre', elements: [{ type: 'text', text: nuevoProductoData.nombre }] },
+                { type: 'element', name: 'codigo_barras', elements: [{ type: 'text', text: nuevoProductoData.codigo_barras }] },
+                { type: 'element', name: 'precio_compra', elements: [{ type: 'text', text: nuevoProductoData.precio_compra }] },
+                { type: 'element', name: 'precio_venta', elements: [{ type: 'text', text: nuevoProductoData.precio_venta }] },
+                { type: 'element', name: 'stock', elements: [{ type: 'text', text: nuevoProductoData.stock }] },
+                { type: 'element', name: 'unidad', elements: [{ type: 'text', text: nuevoProductoData.unidad }] },
+                { type: 'element', name: 'proveedor_ref', elements: [{ type: 'text', text: nuevoProductoData.proveedor_ref }] },
+                { type: 'element', name: 'fecha_alta', elements: [{ type: 'text', text: new Date().toISOString().slice(0, 10) }] }
+            ]
+        };
+        if(!inventarioNode.elements) inventarioNode.elements = [];
+        inventarioNode.elements.push(nuevoProducto);
 
-        await axios.post(
-            `${existDbUrl}/consulta`,
-            xquery,
-            existDbConfig
-        );
-
-
-
-        res.status(201).json({ mensaje: 'Producto agregado exitosamente', id: nuevoId });
+        const nuevoXmlData = convert.js2xml(jsData, { ...xmlOptions, declarationKey: 'declaration' });
+        await axios.put(`${existDbUrl}${dbPath}`, nuevoXmlData, { ...existDbConfig, headers: { 'Content-Type': 'application/xml' } });
+        res.status(201).json({ mensaje: 'Producto agregado exitosamente.' });
     } catch (error) {
-        console.error('Error al agregar producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error("Error al agregar producto:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Ruta para eliminar un producto
-app.delete('/api/productos/:id', async (req, res) => {
-    try {
-        const { id } = req.params;
-        const xquery = `
-            xquery version "3.1";
-            let $producto := doc("pos_miscelanea.xml")/pos_miscelanea/inventario/producto[@id="${id}"]
-            return update delete $producto
-        `;
-
-        await axios.post(`${existDbUrl}/consulta`, xquery, existDbConfig);
-        res.status(200).json({ mensaje: 'Producto eliminado exitosamente' });
-    } catch (error) {
-        console.error('Error al eliminar producto:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// ## Manejo de Ventas y Tickets ##
-
-// Ruta para realizar una venta
+// --- API PARA VENTAS ---
 app.post('/api/ventas', async (req, res) => {
     try {
-        const { items, tipo_pago, cliente_id } = req.body;
-        const ventaId = `vent_${new Date().getTime()}`;
-        let totalVenta = 0;
-        const itemsXml = items.map(item => {
-            totalVenta += item.precio * item.cantidad;
-            return `<item producto_id="${item.id}" cantidad="${item.cantidad}"/>`;
-        }).join('');
+        const { items } = req.body;
+        const getResponse = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(getResponse.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
 
-        // Transacción XQuery para insertar la venta y actualizar el stock
-        // Usamos una secuencia para ejecutar múltiples actualizaciones
-        const xquery = `
-            xquery version "3.1";
-            let $venta := <venta id="${ventaId}">
-                <fecha>${new Date().toISOString().slice(0, 10)}</fecha>
-                <hora>${new Date().toTimeString().slice(0, 8)}</hora>
-                <total>${totalVenta}</total>
-                <items>${itemsXml}</items>
-                <tipo_pago>${tipo_pago}</tipo_pago>
-            </venta>
+        const ventasNode = findNode(posNode.elements, 'ventas');
+        const inventarioNode = findNode(posNode.elements, 'inventario');
+        if (!ventasNode || !inventarioNode) throw new Error('Estructura XML inválida.');
+        if (!ventasNode.elements) ventasNode.elements = [];
 
-           
+        const totalVenta = items.reduce((sum, item) => sum + item.precio_venta * item.quantity, 0);
+        const nuevaVenta = {
+            type: 'element', name: 'venta', attributes: { id: `vent_${Date.now()}` },
+            elements: [
+                { type: 'element', name: 'fecha', elements: [{ type: 'text', text: new Date().toISOString().slice(0, 10) }] },
+                { type: 'element', name: 'hora', elements: [{ type: 'text', text: new Date().toTimeString().slice(0, 8) }] },
+                { type: 'element', name: 'total', elements: [{ type: 'text', text: totalVenta.toFixed(2) }] },
+                {
+                    type: 'element', name: 'items',
+                    elements: items.map(item => ({
+                        type: 'element', name: 'item',
+                        attributes: { producto_id: item.id, cantidad: item.quantity }
+                    }))
+                },
+                { type: 'element', name: 'tipo_pago', elements: [{ type: 'text', text: 'Efectivo' }] }
+            ]
+        };
+        ventasNode.elements.push(nuevaVenta);
 
-            update insert $venta into doc("pos_miscelanea.xml")/pos_miscelanea/ventas;
+        items.forEach(item => {
+            const productoNode = inventarioNode.elements.find(p => p.attributes && p.attributes.id === item.id);
+            if (productoNode) {
+                const stockNode = findNode(productoNode.elements, 'stock');
+                const stockActual = parseInt(stockNode.elements[0].text, 10);
+                stockNode.elements[0].text = (stockActual - item.quantity).toString();
+            }
+        });
 
-            ${items.map(item => `
-                let $producto := doc("pos_miscelanea.xml")/pos_miscelanea/inventario/producto[@id="${item.id}"]
-                let $nuevoStock := xs:integer($producto/stock) - xs:integer(${item.cantidad})
-                return update replace $producto/stock with <stock>{$nuevoStock}</stock>
-            `).join(';')}
-        `;
-
-       
-
-        await axios.post(
-            `${existDbUrl}/consulta`,
-            xquery,
-            existDbConfig
-        );
-        // Lógica para crédito a clientes (si aplica)
-        if (tipo_pago === 'credito' && cliente_id) {
-            // Lógica para agregar la deuda a la cuenta del cliente
-        }
-
-
-
-        res.status(201).json({ mensaje: 'Venta realizada con éxito', total: totalVenta });
+        const nuevoXmlData = convert.js2xml(jsData, { ...xmlOptions, declarationKey: 'declaration' });
+        await axios.put(`${existDbUrl}${dbPath}`, nuevoXmlData, { ...existDbConfig, headers: { 'Content-Type': 'application/xml' } });
+        res.status(201).json({ mensaje: 'Venta realizada con éxito.' });
     } catch (error) {
-        console.error('Error al realizar la venta:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error("Error al procesar venta:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-
-// ## Manejo de Clientes ##
-
-// Ruta para obtener todos los clientes
+// --- API PARA CLIENTES ---
 app.get('/api/clientes', async (req, res) => {
     try {
-        const xquery = `
-            xquery version "3.1";
-            let $doc := doc("pos_miscelanea.xml")/pos_miscelanea
-            return $doc/clientes/cliente
-        `;
-        const response = await axios.post(`${existDbUrl}/consulta`, xquery, existDbConfig);
-        // Utiliza convert.xml2json para procesar la respuesta
-        const clientesXml = response.data;
-        const clientesJson = convert.xml2json(clientesXml, { compact: true, spaces: 4 });
-        res.status(200).json(JSON.parse(clientesJson));
+        const response = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(response.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        const clientesNode = findNode(posNode.elements, 'clientes');
+        if (!clientesNode || !clientesNode.elements) return res.json([]);
+        
+        const cleanClients = clientesNode.elements
+            .filter(el => el.type === 'element' && el.name === 'cliente')
+            .map(p => {
+                const clientData = { id: p.attributes.id };
+                p.elements.forEach(field => {
+                    if (field.name === 'nombre' || field.name === 'telefono') {
+                        clientData[field.name] = field.elements ? field.elements[0].text : '';
+                    }
+                });
+                return clientData;
+            });
+        res.json(cleanClients);
     } catch (error) {
-        console.error('Error al obtener clientes:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error("Error al obtener clientes:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Ruta para agregar un nuevo cliente
 app.post('/api/clientes', async (req, res) => {
     try {
-        const nuevoCliente = req.body;
-        const nuevoId = `clt_${Math.floor(Math.random() * 10000)}`;
+        const { nombre, telefono } = req.body;
+        const getResponse = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(getResponse.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        let clientesNode = findNode(posNode.elements, 'clientes');
 
-        const xquery = `
-            xquery version "3.1";
-            update insert
-                <cliente id="${nuevoId}">
-                    <nombre>${nuevoCliente.nombre}</nombre>
-                    <telefono>${nuevoCliente.telefono}</telefono>
-                    { if (string-length($nuevoCliente.deuda) > 0) then
-                        <cuenta_credito><deuda>${nuevoCliente.deuda}</deuda></cuenta_credito>
-                      else () }
-                </cliente>
-            into doc("pos_miscelanea.xml")/pos_miscelanea/clientes
-        `;
-        await axios.post(`${existDbUrl}/consulta`, xquery, existDbConfig);
-        res.status(201).json({ mensaje: 'Cliente agregado exitosamente', id: nuevoId });
-    } catch (error) {
-        console.error('Error al agregar cliente:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-// ## Manejo de Reportes (ejemplo: Ventas totales por mes) ##
-
-app.get('/api/reportes/ventas-mensuales', async (req, res) => {
-    try {
-        const xquery = `
-            xquery version "3.1";
-            let $ventas := doc("pos_miscelanea.xml")/pos_miscelanea/ventas/venta
-            let $meses := distinct-values(for $v in $ventas return substring($v/fecha/text(), 1, 7))
-            return 
-                <reporte>
-                {
-                    for $m in $meses
-                    let $ventas-mes := $ventas[starts-with(fecha, $m)]
-                    let $total := sum($ventas-mes/total)
-                    return <mes id="{$m}"><total>{$total}</total></mes>
-                }
-                </reporte>
-        `;
-        const response = await axios.post(`${existDbUrl}/consulta`, xquery, existDbConfig);
-        res.status(200).send(response.data);
-    } catch (error) {
-        console.error('Error al generar el reporte:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
-
-
-// ## Autenticación de Usuarios ##
-app.post('/api/login', async (req, res) => {
-    try {
-        const { nombre_usuario, contrasena } = req.body;
-        const xquery = `
-            xquery version "3.1";
-            let $usuario := doc("pos_miscelanea.xml")/pos_miscelanea/usuarios/usuario[nombre_usuario="${nombre_usuario}"]
-            return if (count($usuario) > 0 and $usuario/contrasena/text() = "${contrasena}") then
-                <respuesta>
-                    <mensaje>Acceso concedido</mensaje>
-                    <usuario_id>{$usuario/@id}</usuario_id>
-                    <rol>{$usuario/rol/text()}</rol>
-                </respuesta>
-            else
-                <respuesta>
-                    <mensaje>Credenciales inválidas</mensaje>
-                </respuesta>
-        `;
-        const response = await axios.post(
-            `${existDbUrl}/consulta`,
-            xquery,
-            existDbConfig
-        );
-
-        // Analiza la respuesta de eXist-db
-        const result = response.data;
-        if (result.includes("Acceso concedido")) {
-            // En un entorno real, enviarías un token JWT
-            res.status(200).json({ mensaje: 'Login exitoso', rol: 'administrador' });
-        } else {
-            res.status(401).json({ mensaje: 'Credenciales inválidas' });
+        if (!clientesNode) {
+            clientesNode = { type: 'element', name: 'clientes', elements: [] };
+            posNode.elements.push(clientesNode);
         }
+        if (!clientesNode.elements) clientesNode.elements = [];
+
+        const nuevoCliente = {
+            type: 'element', name: 'cliente', attributes: { id: `clt_${Date.now()}` },
+            elements: [
+                { type: 'element', name: 'nombre', elements: [{ type: 'text', text: nombre }] },
+                { type: 'element', name: 'telefono', elements: [{ type: 'text', text: telefono || '' }] }
+            ]
+        };
+        clientesNode.elements.push(nuevoCliente);
+
+        const nuevoXmlData = convert.js2xml(jsData, { ...xmlOptions, declarationKey: 'declaration' });
+        await axios.put(`${existDbUrl}${dbPath}`, nuevoXmlData, { ...existDbConfig, headers: { 'Content-Type': 'application/xml' } });
+        res.status(201).json({ mensaje: 'Cliente agregado exitosamente.' });
     } catch (error) {
-        console.error('Error en la autenticación:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
+        console.error("Error al agregar cliente:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
     }
 });
 
-// Inicia el servidor
+// --- API PARA REPORTES ---
+app.get('/api/reportes/datos-ventas', async (req, res) => {
+    try {
+        const response = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(response.data, xmlOptions);
+        
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        const inventarioNode = findNode(posNode.elements, 'inventario');
+        const ventasNode = findNode(posNode.elements, 'ventas');
+
+        if (!ventasNode || !ventasNode.elements) {
+            return res.json({
+                summary: { totalRevenue: 0, totalSales: 0, averageTicket: 0 },
+                salesByMonth: [],
+                topProducts: []
+            });
+        }
+        
+        const ventas = ventasNode.elements.filter(el => el.type === 'element' && el.name === 'venta');
+        
+        const totalRevenue = ventas.reduce((sum, venta) => {
+            const totalNode = findNode(venta.elements, 'total');
+            return sum + (parseFloat(totalNode.elements[0].text) || 0);
+        }, 0);
+        const totalSales = ventas.length;
+        const averageTicket = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+        const salesByMonthMap = {};
+        ventas.forEach(venta => {
+            const fechaNode = findNode(venta.elements, 'fecha');
+            const totalNode = findNode(venta.elements, 'total');
+            const month = fechaNode.elements[0].text.substring(0, 7);
+            const total = parseFloat(totalNode.elements[0].text) || 0;
+            salesByMonthMap[month] = (salesByMonthMap[month] || 0) + total;
+        });
+        const salesByMonth = Object.entries(salesByMonthMap).map(([month, total]) => ({ month, total })).sort((a,b) => a.month.localeCompare(b.month));
+
+        const productSales = {};
+        ventas.forEach(venta => {
+            const itemsNode = findNode(venta.elements, 'items');
+            if(itemsNode && itemsNode.elements) {
+                itemsNode.elements.filter(el => el.name === 'item').forEach(item => {
+                    const id = item.attributes.producto_id;
+                    const qty = parseInt(item.attributes.cantidad, 10);
+                    productSales[id] = (productSales[id] || 0) + qty;
+                });
+            }
+        });
+
+        const productMap = {};
+        if (inventarioNode && inventarioNode.elements) {
+            inventarioNode.elements.filter(el => el.name === 'producto').forEach(p => {
+                productMap[p.attributes.id] = findNode(p.elements, 'nombre').elements[0].text;
+            });
+        }
+        
+        const topProducts = Object.entries(productSales)
+            .sort(([,a],[,b]) => b - a)
+            .slice(0, 5)
+            .map(([id, quantity]) => ({
+                name: productMap[id] || `ID: ${id} (no encontrado)`,
+                quantity
+            }));
+
+        res.json({
+            summary: { totalRevenue, totalSales, averageTicket },
+            salesByMonth,
+            topProducts
+        });
+
+    } catch (error) {
+        console.error("Error al generar reporte:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor al generar reporte.' });
+    }
+});
+
+// --- API PARA CONFIGURACIÓN ---
+app.get('/api/configuracion', async (req, res) => {
+    try {
+        const response = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(response.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        let configNode = findNode(posNode.elements, 'configuracion');
+
+        if (!configNode || !configNode.elements) {
+            return res.json({ nombre_tienda: '', direccion: '' });
+        }
+
+        const settings = {};
+        configNode.elements.forEach(field => {
+            if (field.name === 'nombre_tienda' || field.name === 'direccion') {
+                settings[field.name] = field.elements ? field.elements[0].text : '';
+            }
+        });
+
+        res.json(settings);
+    } catch (error) {
+        console.error("Error al obtener configuración:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+app.post('/api/configuracion', async (req, res) => {
+    try {
+        const { nombre_tienda, direccion } = req.body;
+        const getResponse = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(getResponse.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        let configNode = findNode(posNode.elements, 'configuracion');
+
+        if (!configNode) {
+            configNode = { type: 'element', name: 'configuracion', elements: [] };
+            posNode.elements.unshift(configNode);
+        }
+
+        const updateField = (node, fieldName, value) => {
+            let fieldNode = node.elements.find(el => el.name === fieldName);
+            if (fieldNode) {
+                if (fieldNode.elements && fieldNode.elements[0]) {
+                    fieldNode.elements[0].text = value;
+                } else {
+                    fieldNode.elements = [{ type: 'text', text: value }];
+                }
+            } else {
+                node.elements.push({ type: 'element', name: fieldName, elements: [{ type: 'text', text: value }] });
+            }
+        };
+
+        updateField(configNode, 'nombre_tienda', nombre_tienda);
+        updateField(configNode, 'direccion', direccion);
+
+        const nuevoXmlData = convert.js2xml(jsData, { ...xmlOptions, declarationKey: 'declaration' });
+        await axios.put(`${existDbUrl}${dbPath}`, nuevoXmlData, { ...existDbConfig, headers: { 'Content-Type': 'application/xml' } });
+
+        res.status(200).json({ mensaje: 'Configuración guardada exitosamente.' });
+    } catch (error) {
+        console.error("Error al guardar configuración:", error.response ? error.response.data : error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+// --- API PARA PROVEEDORES ---
+app.get('/api/proveedores', async (req, res) => {
+    try {
+        const response = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(response.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        const proveedoresNode = findNode(posNode.elements, 'proveedores');
+        if (!proveedoresNode || !proveedoresNode.elements) return res.json([]);
+        
+        const cleanSuppliers = proveedoresNode.elements
+            .filter(el => el.type === 'element' && el.name === 'proveedor')
+            .map(p => {
+                const supplierData = { id: p.attributes.id };
+                p.elements.forEach(field => {
+                    if (field.name === 'nombre' || field.name === 'contacto') {
+                        supplierData[field.name] = field.elements ? field.elements[0].text : '';
+                    }
+                });
+                return supplierData;
+            });
+        res.json(cleanSuppliers);
+    } catch (error) {
+        console.error("Error al obtener proveedores:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+app.post('/api/proveedores', async (req, res) => {
+    try {
+        const { nombre, contacto } = req.body;
+        const getResponse = await axios.get(`${existDbUrl}${dbPath}`, existDbConfig);
+        const jsData = convert.xml2js(getResponse.data, xmlOptions);
+        const posNode = findNode(jsData.elements, 'pos_miscelanea');
+        let proveedoresNode = findNode(posNode.elements, 'proveedores');
+
+        if (!proveedoresNode) {
+            proveedoresNode = { type: 'element', name: 'proveedores', elements: [] };
+            posNode.elements.push(proveedoresNode);
+        }
+        if (!proveedoresNode.elements) proveedoresNode.elements = [];
+
+        const nuevoProveedor = {
+            type: 'element', name: 'proveedor', attributes: { id: `prov_${Date.now()}` },
+            elements: [
+                { type: 'element', name: 'nombre', elements: [{ type: 'text', text: nombre }] },
+                { type: 'element', name: 'contacto', elements: [{ type: 'text', text: contacto || '' }] }
+            ]
+        };
+        proveedoresNode.elements.push(nuevoProveedor);
+
+        const nuevoXmlData = convert.js2xml(jsData, { ...xmlOptions, declarationKey: 'declaration' });
+        await axios.put(`${existDbUrl}${dbPath}`, nuevoXmlData, { ...existDbConfig, headers: { 'Content-Type': 'application/xml' } });
+        res.status(201).json({ mensaje: 'Proveedor agregado exitosamente.' });
+    } catch (error) {
+        console.error("Error al agregar proveedor:", error.message);
+        res.status(500).json({ error: 'Error interno del servidor.' });
+    }
+});
+
+
+// --- INICIO DEL SERVIDOR ---
 app.listen(PORT, () => {
     console.log(`Servidor de backend escuchando en http://localhost:${PORT}`);
 });
+

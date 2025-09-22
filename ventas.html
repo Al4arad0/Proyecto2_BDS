@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Punto de Venta Miscelánea</title>
     <link rel="stylesheet" href="styles.css">
-    <script src="server.js" defer></script>
+    <script src="ventas.js" defer></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 </head>
 <body>
@@ -14,8 +14,8 @@
         <div class="logo">POS MISCELÁNEA MARY</div>
         <nav>
             <ul>
-                <li><a href="index.html" class="active"><span class="material-icons">home</span> Inicio </a></li>
-                <li><a href="ventas.html"><span class="material-icons">sell</span> Ventas</a></li>
+                <li><a href="index.html" ><span class="material-icons">home</span> Inicio </a></li>
+                <li><a href="ventas.html" class="active"><span class="material-icons">sell</span> Ventas</a></li>
                 <li><a href="inventario.html"><span class="material-icons">inventory_2</span> Inventario</a></li>
                 <li><a href="clientes.html"><span class="material-icons">groups</span> Clientes</a></li>
                 <li><a href="proveedores.html"><span class="material-icons">local_shipping</span> Proveedores</a></li>
@@ -28,11 +28,34 @@
 
     <div class="main-content">
         <header>
-            <h1>INICIO</h1>
+            <h1>Ventas</h1>
             <div class="user-info">
                 <span>Usuario: Admin</span>
             </div>
         </header>
+
+        <section class="sales-container">
+            <div class="product-search">
+                <input type="text" id="searchInput" placeholder="Buscar producto por nombre...">
+            </div>
+            <div class="sales-panel">
+                <div class="product-list">
+                    <!-- Los productos se cargarán aquí dinámicamente -->
+                    <p>Cargando productos...</p>
+                </div>
+                <div class="cart-summary">
+                    <h3>Carrito</h3>
+                    <ul id="cartItems">
+                        <!-- Items del carrito se insertarán aquí -->
+                    </ul>
+                    <div class="total">
+                        <strong>Total:</strong> <span id="totalAmount">$0.00</span>
+                    </div>
+                    <button class="checkout-btn">Pagar</button>
+                    <button class="cancel-btn">Cancelar</button>
+                </div>
+            </div>
+        </section>
     </div>
 
 </body>

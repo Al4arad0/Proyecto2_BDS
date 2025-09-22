@@ -23,6 +23,16 @@
             <proveedor_ref>Bimbo</proveedor_ref>
             <fecha_alta>2025-09-16</fecha_alta>
         </producto>
+        <producto id="prod_1758558448344">
+            <nombre>Pepitas</nombre>
+            <codigo_barras>1236547895</codigo_barras>
+            <precio_compra>5</precio_compra>
+            <precio_venta>15</precio_venta>
+            <stock>10</stock>
+            <unidad>1</unidad>
+            <proveedor_ref>Semillero</proveedor_ref>
+            <fecha_alta>2025-09-22</fecha_alta>
+        </producto>
     </inventario>
     
     <ventas>
