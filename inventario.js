@@ -13,8 +13,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 throw new Error(errorData.error || 'No se pudo obtener la lista de productos.');
             }
             
-            // --- INICIO DE LA CORRECCIÓN ---
-            // 'data' ahora es un array simple de productos: [{id: "...", nombre: "..."}, ...]
             const products = await response.json();
             
             inventoryList.innerHTML = ''; // Limpia la tabla antes de insertar los nuevos datos
@@ -43,7 +41,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 `;
                 inventoryList.appendChild(row);
             });
-            // --- FIN DE LA CORRECCIÓN ---
             
         } catch (error) {
             console.error('Error en fetchProducts:', error);
@@ -95,4 +92,5 @@ document.addEventListener('DOMContentLoaded', () => {
     // Carga los productos al iniciar la página
     fetchProducts();
 });
+
 
