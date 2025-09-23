@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE pos_miscelanea SYSTEM "pos_miscelanea.dtd">
 <pos_miscelanea>
-    
+
     <inventario>
         <producto id="prod_001">
             <nombre>Coca-Cola 600ml</nombre>
@@ -23,18 +23,48 @@
             <proveedor_ref>Bimbo</proveedor_ref>
             <fecha_alta>2025-09-16</fecha_alta>
         </producto>
+        <producto id="prod_003">
+            <nombre>Sabritas Sal 45g</nombre>
+            <codigo_barras>7501011119738</codigo_barras>
+            <precio_compra>9.50</precio_compra>
+            <precio_venta>16.00</precio_venta>
+            <stock>120</stock>
+            <unidad>pieza</unidad>
+            <proveedor_ref>Sabritas</proveedor_ref>
+            <fecha_alta>2025-09-17</fecha_alta>
+        </producto>
+        <producto id="prod_004">
+            <nombre>Leche Lala Entera 1L</nombre>
+            <codigo_barras>7501020532524</codigo_barras>
+            <precio_compra>20.00</precio_compra>
+            <precio_venta>26.50</precio_venta>
+            <stock>50</stock>
+            <unidad>pieza</unidad>
+            <proveedor_ref>Lala</proveedor_ref>
+            <fecha_alta>2025-09-18</fecha_alta>
+        </producto>
+        <producto id="prod_005">
+            <nombre>Pan Blanco Bimbo Grande</nombre>
+            <codigo_barras>7501030465952</codigo_barras>
+            <precio_compra>35.00</precio_compra>
+            <precio_venta>45.00</precio_venta>
+            <stock>30</stock>
+            <unidad>pieza</unidad>
+            <proveedor_ref>Bimbo</proveedor_ref>
+            <fecha_alta>2025-09-18</fecha_alta>
+        </producto>
         <producto id="prod_1758558448344">
             <nombre>Pepitas</nombre>
             <codigo_barras>1236547895</codigo_barras>
-            <precio_compra>5</precio_compra>
-            <precio_venta>15</precio_venta>
+            <precio_compra>5.00</precio_compra>
+            <precio_venta>15.00</precio_venta>
             <stock>10</stock>
-            <unidad>1</unidad>
+            <unidad>pieza</unidad>
             <proveedor_ref>Semillero</proveedor_ref>
             <fecha_alta>2025-09-22</fecha_alta>
         </producto>
     </inventario>
-    
+
     <ventas>
         <venta id="vent_001">
             <fecha>2025-09-16</fecha>
@@ -46,8 +76,39 @@
             </items>
             <tipo_pago>Efectivo</tipo_pago>
         </venta>
+        <venta id="vent_002">
+            <fecha>2025-09-17</fecha>
+            <hora>14:15:20</hora>
+            <total>58.50</total>
+            <items>
+                <item producto_id="prod_004" cantidad="1"/>
+                <item producto_id="prod_001" cantidad="1"/>
+                <item producto_id="prod_003" cantidad="1"/>
+            </items>
+            <tipo_pago>Tarjeta</tipo_pago>
+        </venta>
+        <venta id="vent_003">
+            <fecha>2025-09-18</fecha>
+            <hora>18:45:10</hora>
+            <total>75.00</total>
+            <items>
+                <item producto_id="prod_005" cantidad="1"/>
+                <item producto_id="prod_002" cantidad="2"/>
+            </items>
+            <tipo_pago>Efectivo</tipo_pago>
+        </venta>
+         <venta id="vent_004">
+            <fecha>2025-09-22</fecha>
+            <hora>09:05:00</hora>
+            <total>49.00</total>
+            <items>
+                <item producto_id="prod_001" cantidad="1"/>
+                <item producto_id="prod_003" cantidad="2"/>
+            </items>
+            <tipo_pago>Tarjeta</tipo_pago>
+        </venta>
     </ventas>
-    
+
     <clientes>
         <cliente id="clt_001">
             <nombre>Juan Pérez</nombre>
@@ -59,21 +120,56 @@
                 </historial_pagos>
             </cuenta_credito>
         </cliente>
+        <cliente id="clt_002">
+            <nombre>Maria García</nombre>
+            <telefono>5587654321</telefono>
+            <cuenta_credito>
+                <deuda>120.50</deuda>
+                 <historial_pagos>
+                    <pago fecha="2025-09-15" monto="50.00"/>
+                </historial_pagos>
+            </cuenta_credito>
+        </cliente>
+        <cliente id="clt_003">
+            <nombre>Carlos Sánchez</nombre>
+            <telefono>5555555555</telefono>
+        </cliente>
     </clientes>
-    
+
     <proveedores>
         <proveedor id="prov_001">
             <nombre>Coca-Cola FEMSA</nombre>
             <contacto>5598765432</contacto>
         </proveedor>
+        <proveedor id="prov_002">
+            <nombre>Bimbo</nombre>
+            <contacto>8009102030</contacto>
+        </proveedor>
+        <proveedor id="prov_003">
+            <nombre>Sabritas</nombre>
+            <contacto>8009099000</contacto>
+        </proveedor>
+        <proveedor id="prov_004">
+            <nombre>Lala</nombre>
+            <contacto>8004567890</contacto>
+        </proveedor>
+        <proveedor id="prov_005">
+            <nombre>Semillero</nombre>
+            <contacto>2221234567</contacto>
+        </proveedor>
     </proveedores>
-    
+
     <usuarios>
         <usuario id="usr_001">
             <nombre_usuario>admin</nombre_usuario>
             <contrasena>admin123</contrasena>
             <rol>administrador</rol>
         </usuario>
+        <usuario id="usr_002">
+            <nombre_usuario>cajero1</nombre_usuario>
+            <contrasena>caja2025</contrasena>
+            <rol>cajero</rol>
+        </usuario>
     </usuarios>
-    
+
 </pos_miscelanea>
